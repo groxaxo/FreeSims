@@ -41,6 +41,16 @@ namespace FSO.LotView.Components
             
         }
 
+        private Texture2D GenMips(GraphicsDevice device, Texture2D texture)
+        {
+            var data = new Color[texture.Width * texture.Height];
+            texture.GetData(data);
+            texture.Dispose();
+            texture = new Texture2D(device, texture.Width, texture.Height, true, SurfaceFormat.Color);
+            
+            return texture;
+        }
+
         public void RegenRoof(GraphicsDevice device)
         {
             var roofs = Content.Content.Get().WorldRoofs;
