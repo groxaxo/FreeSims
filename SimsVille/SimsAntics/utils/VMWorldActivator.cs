@@ -178,19 +178,16 @@ public class VMWorldActivator
 		OBJM objm = iff.Get<OBJM>(1);
 		OBJT objt = iff.Get<OBJT>(0);
 
-        objm.Prepare((ushort typeID) =>
-        {
-            var entry = objt.Entries[typeID - 1];
-            return new OBJMResource()
-            {
-                OBJD = Content.Get().WorldObjects.Get(entry.GUID, false)?.OBJ,
-                OBJT = entry
-            };
-        });
+        var ent = objt.Entries[objt.OriginalID - 1]; 
+		OBJMResource objmres = new OBJMResource()
+		{
+    		OBJD = Content.Get().WorldObjects.Get(ent.GUID, false)?.OBJ,
+    		OBJT = ent
+		};
 
         var target = objm.ObjectData[0];
         int l = 0;
-		for (ushort k = 0; k < objm.IDToOBJT.Count; k += 2)
+		for (ushort k = 0; k < objm.IDToOBJT.Count(); k += 2)
 		{
 			if (objm.IDToOBJT[(ushort)k] != 0 && objm.ObjectData.TryGetValue(objm.IDToOBJT[(ushort)k], out target))
 			{
