@@ -178,11 +178,11 @@ public class VMWorldActivator
 		OBJM objm = iff.Get<OBJM>(1);
 		OBJT objt = iff.Get<OBJT>(0);
 
-        var ent = objt.Entries[objt.OriginalID - 1]; 
+        var entr = objt.Entries[objt.OriginalID - 1]; 
 		OBJMResource objmres = new OBJMResource()
 		{
-    		OBJD = Content.Get().WorldObjects.Get(ent.GUID, false)?.OBJ,
-    		OBJT = ent
+    		OBJD = Content.Get().WorldObjects.Get(entr.GUID, false)?.OBJ,
+    		OBJT = entr
 		};
 
         var target = objm.ObjectData[0];
@@ -653,3 +653,4 @@ public class VMWorldActivator
 		component.Initialize(World.State.Device, World.State);
 	}
 }
+
