@@ -198,7 +198,7 @@ sims.files/
   - `SLOT`: Object slots
   - `PALT`: Color palettes
   - `And 50+ other chunk types`
-- **DBPF**: Database Packed File (The Sims 3 format, partial support)
+- **DBPF**: Database Packed File (The Sims 2/3 format, partial support)
 - **HIT**: Audio sequencing format
 - **XA**: PlayStation ADPCM audio
 - **UTK**: Maxis proprietary audio format
@@ -881,22 +881,22 @@ Clients update their local VM state
                            │ (VM Server) │       │
                            └─────────────┘       │
                                                  │
-                    ┌────────────────────────────┼────────────────┐
-                    │                            │                │
-            ┌───────▼───┐            ┌───────────▼───┐  ┌─────────▼─────┐
-            │sims.common│            │  sims.files   │  │               │
-            │(Rendering,│            │  (FAR, IFF,   │  │               │
-            │ Vitaboy,  │            │   DBPF, HIT,  │  │               │
-            │ Framework)│            │   Formats)    │  │               │
-            └───────────┘            └───────────────┘  └───────────────┘
-                    │                         │
-                    └─────────────┬───────────┘
-                                  │
-                         ┌────────▼────────┐
-                         │  Game Assets    │
-                         │  (FAR archives, │
-                         │   IFF files)    │
-                         └─────────────────┘
+                    ┌─────────────┬──────────────┘
+                    │             │
+            ┌───────▼───┐  ┌──────▼──────┐
+            │sims.common│  │ sims.files  │
+            │(Rendering,│  │  (FAR, IFF, │
+            │ Vitaboy,  │  │  DBPF, HIT, │
+            │ Framework)│  │  Formats)   │
+            └─────┬─────┘  └──────┬──────┘
+                  │                │
+                  └────────┬───────┘
+                           │
+                  ┌────────▼────────┐
+                  │  Game Assets    │
+                  │  (FAR archives, │
+                  │   IFF files)    │
+                  └─────────────────┘
 ```
 
 ### Component Interaction Summary
@@ -973,7 +973,7 @@ Clients update their local VM state
 |--------|-------------|-------------|----------|
 | **FAR1** | File Archive v1 | None | Simple file containers |
 | **FAR3** | File Archive v3 | RefPack | Main game assets (optimized) |
-| **DBPF** | Database Packed File | Varies | The Sims 3 format (partial support) |
+| **DBPF** | Database Packed File | Varies | The Sims 2/3 format (partial support) |
 
 ### IFF Chunk Types (50+ types)
 
@@ -1207,7 +1207,7 @@ The modular design allows for future enhancements:
 | **BHAV** | Behavior - Bytecode scripts for object behaviors |
 | **FAR** | File Archive - Compressed asset container |
 | **IFF** | Interchange File Format - Chunk-based file format |
-| **DBPF** | Database Packed File - The Sims 3 format |
+| **DBPF** | Database Packed File - The Sims 2/3 format |
 | **VM** | Virtual Machine - Executes BHAV scripts |
 | **DGRP** | Draw Group - Multi-sprite rendering definition |
 | **TTAB** | Interaction Table - Pie menu definitions |
