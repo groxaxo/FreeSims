@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+import logging
 from datetime import datetime
 from typing import List, Dict, Optional, Literal
 
@@ -22,6 +23,13 @@ OLLAMA_TIMEOUT_S = float(os.getenv("OLLAMA_TIMEOUT_S", "20"))
 MEM_DB_PATH = os.getenv("MEM_DB_PATH", "./sims_memory_db")
 MEM_COLLECTION = os.getenv("MEM_COLLECTION", "sim_episodic_memory")
 TOP_K = int(os.getenv("TOP_K", "3"))
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("llm_server")
 
 app = FastAPI(title="Sims LLM Brain", version="1.0")
 
@@ -126,7 +134,8 @@ async def tick(state: SimState):
         # Chroma returns list-of-lists.
         docs = (res.get("documents") or [[]])[0]
         retrieved_docs = docs[:TOP_K] if docs else []
-    except Exception:
+    except Exception as e:
+        logger.warning(f"ChromaDB query failed: {e}")
         retrieved_docs = []
 
     # 2) Prompt
@@ -178,8 +187,8 @@ async def tick(state: SimState):
             documents=[mem_text],
             metadatas=[{"timestamp": datetime.now().isoformat(), "sim_name": state.sim_name}],
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error(f"Failed to store memory: {e}")
 
     return decision
 

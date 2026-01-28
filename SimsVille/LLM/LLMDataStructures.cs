@@ -7,63 +7,63 @@ namespace FSO.Client.LLM
     public sealed class LLMInteractionInfo
     {
         [DataMember(Name = "id")]
-        public int id;
+        public int Id;
         
         [DataMember(Name = "name")]
-        public string name;
+        public string Name;
     }
 
     [DataContract]
     public sealed class LLMSimState
     {
         [DataMember(Name = "sim_name")]
-        public string sim_name;
+        public string SimName;
         
         [DataMember(Name = "motives")]
-        public Dictionary<string, int> motives = new Dictionary<string, int>();
+        public Dictionary<string, int> Motives = new Dictionary<string, int>();
         
         [DataMember(Name = "nearby_objects")]
-        public List<LLMObjectInfo> nearby_objects = new List<LLMObjectInfo>();
+        public List<LLMObjectInfo> NearbyObjects = new List<LLMObjectInfo>();
         
         [DataMember(Name = "recent_chat")]
-        public List<string> recent_chat = new List<string>();
+        public List<string> RecentChat = new List<string>();
         
         [DataMember(Name = "current_action")]
-        public string current_action;
+        public string CurrentAction;
     }
 
     [DataContract]
     public sealed class LLMObjectInfo
     {
         [DataMember(Name = "guid")]
-        public string guid;
+        public string Guid;
         
         [DataMember(Name = "name")]
-        public string name;
+        public string Name;
         
         [DataMember(Name = "interactions")]
-        public List<LLMInteractionInfo> interactions = new List<LLMInteractionInfo>();
+        public List<LLMInteractionInfo> Interactions = new List<LLMInteractionInfo>();
         
         [DataMember(Name = "distance")]
-        public float distance;
+        public float Distance;
     }
 
     [DataContract]
     public sealed class LLMAgentResponse
     {
         [DataMember(Name = "action_type")]
-        public string action_type;
+        public string ActionType;
         
         [DataMember(Name = "target_guid")]
-        public string target_guid;
+        public string TargetGuid;
         
         [DataMember(Name = "interaction_id")]
-        public int? interaction_id;
+        public int? InteractionId;
         
         [DataMember(Name = "speech_text")]
-        public string speech_text;
+        public string SpeechText;
         
         [DataMember(Name = "thought_process")]
-        public string thought_process;
+        public string ThoughtProcess;
     }
 }

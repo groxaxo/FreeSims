@@ -17,20 +17,29 @@ namespace FSO.Client.LLM
 {
     public sealed class LLMBridge
     {
-        private static readonly HttpClient Client = new HttpClient();
+        private static readonly HttpClient Client;
+        private const float MAX_INTERACTION_DISTANCE = 8.0f;
+        
         private readonly string BrainUrl;
         private readonly VMEntity MySim;
         private readonly VM MyVM;
 
         private readonly SemaphoreSlim TickLock = new SemaphoreSlim(1, 1);
-        private CancellationTokenSource InflightCts;
+        private CancellationTokenSource _inflightCts;
+
+        static LLMBridge()
+        {
+            Client = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(10)
+            };
+        }
 
         public LLMBridge(VMEntity sim, VM vm, string brainUrl = "http://127.0.0.1:5000/tick")
         {
             MySim = sim;
             MyVM = vm;
             BrainUrl = brainUrl;
-            Client.Timeout = TimeSpan.FromSeconds(10);
         }
 
         public Task TryTickAsync() => TryTickAsync(CancellationToken.None);
@@ -41,15 +50,16 @@ namespace FSO.Client.LLM
 
             try
             {
-                // cancel previous in-flight tick (optional)
-                InflightCts?.Cancel();
-                InflightCts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
+                // Dispose and cancel previous in-flight tick
+                _inflightCts?.Cancel();
+                _inflightCts?.Dispose();
+                _inflightCts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
 
                 var state = BuildStateDTO();
                 var json = Serialize(state);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                using var resp = await Client.PostAsync(BrainUrl, content, InflightCts.Token).ConfigureAwait(false);
+                using var resp = await Client.PostAsync(BrainUrl, content, _inflightCts.Token).ConfigureAwait(false);
                 if (!resp.IsSuccessStatusCode) return;
 
                 var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -58,9 +68,17 @@ namespace FSO.Client.LLM
 
                 ExecuteDecision(decision);
             }
-            catch
+            catch (OperationCanceledException)
             {
-                // swallow to protect the game loop; log if you have a logger
+                // Expected during cancellation, ignore
+            }
+            catch (Exception ex)
+            {
+                // Log error in debug builds
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"LLMBridge error: {ex.Message}");
+#endif
+                // Swallow to protect the game loop
             }
             finally
             {
@@ -83,29 +101,27 @@ namespace FSO.Client.LLM
             var serializer = new DataContractJsonSerializer(typeof(T));
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(json ?? "")))
             {
-                var value = serializer.ReadObject(stream);
-                if (value == null) throw new SerializationException("Empty response from AI server.");
-                return (T)value;
+                return (T)serializer.ReadObject(stream);
             }
         }
 
         private LLMSimState BuildStateDTO()
         {
             var s = new LLMSimState();
-            s.sim_name = MySim.Name ?? "Sim";
-            s.current_action = "IDLE";
+            s.SimName = MySim.Name ?? "Sim";
+            s.CurrentAction = "IDLE";
 
             // Motives: map from VMMotive enum to string keys
             if (MySim is VMAvatar avatar)
             {
-                s.motives["Hunger"] = avatar.GetMotiveData(VMMotive.Hunger);
-                s.motives["Energy"] = avatar.GetMotiveData(VMMotive.Energy);
-                s.motives["Comfort"] = avatar.GetMotiveData(VMMotive.Comfort);
-                s.motives["Hygiene"] = avatar.GetMotiveData(VMMotive.Hygiene);
-                s.motives["Bladder"] = avatar.GetMotiveData(VMMotive.Bladder);
-                s.motives["Room"] = avatar.GetMotiveData(VMMotive.Room);
-                s.motives["Social"] = avatar.GetMotiveData(VMMotive.Social);
-                s.motives["Fun"] = avatar.GetMotiveData(VMMotive.Fun);
+                s.Motives["Hunger"] = avatar.GetMotiveData(VMMotive.Hunger);
+                s.Motives["Energy"] = avatar.GetMotiveData(VMMotive.Energy);
+                s.Motives["Comfort"] = avatar.GetMotiveData(VMMotive.Comfort);
+                s.Motives["Hygiene"] = avatar.GetMotiveData(VMMotive.Hygiene);
+                s.Motives["Bladder"] = avatar.GetMotiveData(VMMotive.Bladder);
+                s.Motives["Room"] = avatar.GetMotiveData(VMMotive.Room);
+                s.Motives["Social"] = avatar.GetMotiveData(VMMotive.Social);
+                s.Motives["Fun"] = avatar.GetMotiveData(VMMotive.Fun);
             }
 
             var myPos = MySim.Position;
@@ -120,48 +136,45 @@ namespace FSO.Client.LLM
                     new Vector2(myPos.x, myPos.y)
                 );
 
-                if (dist > 8.0f) continue;
+                if (dist > MAX_INTERACTION_DISTANCE) continue;
 
                 var info = new LLMObjectInfo
                 {
-                    guid = obj.ObjectID.ToString(),
-                    name = obj.Name ?? obj.ToString(),
-                    distance = dist
+                    Guid = obj.ObjectID.ToString(),
+                    Name = obj.Name ?? obj.ToString(),
+                    Distance = dist
                 };
 
                 // Get pie menu interactions for this object
                 var pieMenu = obj.GetPieMenu(MyVM, MySim, false);
                 foreach (var interaction in pieMenu)
                 {
-                    info.interactions.Add(new LLMInteractionInfo
+                    info.Interactions.Add(new LLMInteractionInfo
                     {
-                        id = interaction.ID,
-                        name = interaction.Name ?? "Unknown"
+                        Id = interaction.ID,
+                        Name = interaction.Name ?? "Unknown"
                     });
                 }
 
-                s.nearby_objects.Add(info);
+                s.NearbyObjects.Add(info);
             }
-
-            // recent_chat: wire this to your chat log buffer if available
-            // s.recent_chat = ChatLog.TakeLast(10).ToList();
 
             return s;
         }
 
         private void ExecuteDecision(LLMAgentResponse decision)
         {
-            var type = (decision.action_type ?? "IDLE").ToUpperInvariant();
+            var type = (decision.ActionType ?? "IDLE").ToUpperInvariant();
 
             switch (type)
             {
                 case "CHAT":
-                    if (!string.IsNullOrWhiteSpace(decision.speech_text))
+                    if (!string.IsNullOrWhiteSpace(decision.SpeechText))
                     {
                         MyVM.SendCommand(new VMNetChatCmd
                         {
                             ActorUID = MySim.PersistID,
-                            Message = decision.speech_text
+                            Message = decision.SpeechText
                         });
                     }
                     break;
@@ -172,10 +185,10 @@ namespace FSO.Client.LLM
                     break;
 
                 case "INTERACT":
-                    if (string.IsNullOrWhiteSpace(decision.target_guid) || decision.interaction_id == null) return;
+                    if (string.IsNullOrWhiteSpace(decision.TargetGuid) || decision.InteractionId == null) return;
 
-                    if (!short.TryParse(decision.target_guid, out var targetObjId)) return;
-                    var interactionId = decision.interaction_id.Value;
+                    if (!short.TryParse(decision.TargetGuid, out var targetObjId)) return;
+                    var interactionId = decision.InteractionId.Value;
 
                     MyVM.SendCommand(new VMNetInteractionCmd
                     {
@@ -189,6 +202,13 @@ namespace FSO.Client.LLM
                 default:
                     break;
             }
+        }
+        
+        public void Dispose()
+        {
+            _inflightCts?.Cancel();
+            _inflightCts?.Dispose();
+            TickLock?.Dispose();
         }
     }
 }

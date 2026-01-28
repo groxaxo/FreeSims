@@ -229,10 +229,10 @@ namespace FSO.Client
                 if (_aiBridge != null)
                 {
                     _aiAccumSeconds += gameTime.ElapsedGameTime.TotalSeconds;
-                    if (_aiAccumSeconds >= 5.0) // tick every ~5 seconds
+                    if (_aiAccumSeconds >= 5.0)
                     {
                         _ = _aiBridge.TryTickAsync(); // fire-and-forget Task (safe gated internally)
-                        _aiAccumSeconds = 0;
+                        _aiAccumSeconds -= 5.0; // Preserve fractional remainder to avoid timing drift
                     }
                 }
             }
