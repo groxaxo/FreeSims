@@ -24,6 +24,18 @@ Use Visual Studio 2017 or higher. Mono for Linux.  Run SimsVille.sln to build
 ## Installation
 
 Original game needed, works with Complete Collection or Legacy Collection, install it in default path and run Simsville.
+
+## AI Agents (optional sidecar)
+
+An optional AI sidecar (Ollama + FastAPI) can run alongside SimsNet. Files live under `ai/`.
+Set `FREESIMS_AI_URL` to point SimsNet at a non-default AI server URL.
+
+```bash
+cd ai/docker
+cp .env.example .env
+docker compose -f compose.ai.yml up -d --build
+curl http://127.0.0.1:8066/health
+```
 	
 # Screenshots
 
