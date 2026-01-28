@@ -17,6 +17,8 @@ using FSO.Client.GameContent;
 using FSO.Common;
 using Microsoft.Xna.Framework.Audio;
 using TSO.HIT;
+using FSO.Client.UI.Panels;
+using FSO.SimAntics;
 
 namespace FSO.Client
 {
@@ -29,6 +31,9 @@ namespace FSO.Client
         public _3DLayer SceneMgr;
         public SpriteFont Font, BigFont;
         public bool WindowChange = false;
+
+        private LLM.LLMBridge _aiBridge;
+        private double _aiAccumSeconds = 0;
 
 		public TSOGame() : base()
         {
@@ -209,6 +214,28 @@ namespace FSO.Client
             NetworkFacade.Client.ProcessPackets();
 
             if (HITVM.Get() != null) HITVM.Get().Tick();
+
+            // AI Bridge Update (Module 4B - Heartbeat)
+            if (uiLayer?.CurrentUIScreen is UILotControl lotControl)
+            {
+                var vm = lotControl.vm;
+                var activeEntity = lotControl.ActiveEntity;
+
+                if (_aiBridge == null && activeEntity != null && vm != null)
+                {
+                    _aiBridge = new LLM.LLMBridge(activeEntity, vm);
+                }
+
+                if (_aiBridge != null)
+                {
+                    _aiAccumSeconds += gameTime.ElapsedGameTime.TotalSeconds;
+                    if (_aiAccumSeconds >= 5.0) // tick every ~5 seconds
+                    {
+                        _ = _aiBridge.TryTickAsync(); // fire-and-forget Task (safe gated internally)
+                        _aiAccumSeconds = 0;
+                    }
+                }
+            }
 
             base.Update(gameTime);
         }
