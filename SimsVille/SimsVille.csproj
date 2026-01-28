@@ -537,6 +537,8 @@
     <Compile Include="World\WorldComponent.cs" />
     <Compile Include="World\WorldContent.cs" />
     <Compile Include="World\WorldState.cs" />
+    <Compile Include="LLM\LLMDataStructures.cs" />
+    <Compile Include="LLM\LLMBridge.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="GOLDEngine">
