@@ -25,6 +25,7 @@ using FSO.LotView;
 using SimsNet.Properties;
 using FSO.LotView.Model;
 using FSO.Files.Formats.IFF;
+using SimsNet.AI;
 
 namespace SimsNet
 {
@@ -37,6 +38,7 @@ namespace SimsNet
         private int Port;
         private string LotName;
         private bool TS1, Dedicated;
+        private AiAgentManager aiAgents;
 
         public VMInstance(int port)
         {
@@ -71,6 +73,12 @@ namespace SimsNet
             vm.Init();
             vm.VM_SetDriver(driver);
             vm.OnChatEvent += Vm_OnChatEvent;
+
+            var aiBaseUrl = Environment.GetEnvironmentVariable("FREESIMS_AI_URL") ?? "http://127.0.0.1:8066";
+            aiAgents = new AiAgentManager(aiBaseUrl, 3.0);
+            aiAgents.Register("airi_alpha", 1001);
+            aiAgents.Register("airi_beta", 1002);
+            aiAgents.Register("glitch", 1003);
 
             Console.WriteLine("Select the lot type");
             Console.WriteLine("1-Empty");
@@ -282,6 +290,10 @@ namespace SimsNet
             }
 
             Console.WriteLine(print);
+            if (evt.Type == VMChatEventType.Message || evt.Type == VMChatEventType.MessageMe)
+            {
+                aiAgents?.RecordChat(evt.Text.LastOrDefault() ?? "");
+            }
         }
 
         public void SendMessage(string msg)
@@ -332,6 +344,7 @@ namespace SimsNet
                 TicksSinceSave++;
                 try {
                     state.Update();
+                    aiAgents?.Update(state, 0.016);
                 } catch (Exception e)
                 {
                     state.CloseNet(VMCloseNetReason.Unspecified);
