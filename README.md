@@ -27,7 +27,7 @@ msbuild SimsVille/SimsVille.sln /p:Configuration=Release /p:Platform=x86
 
 - Install The Sims 1 (Complete Collection or Legacy Collection).
   - Windows: the game installer sets the registry path that FreeSims uses to locate assets.
-  - Linux: copy the game files into `game/The Sims/` (relative to the FreeSims folder).
+  - Linux: copy the game files into `game/The Sims/` (relative to the repository root).
 - Build the solution (see above).
 - Run `SimsVille/bin/Release/SimsVille.exe` (or run from Visual Studio).
 
