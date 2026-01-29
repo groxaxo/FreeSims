@@ -8,22 +8,28 @@ Project FreeSims is intended to be an open source engine recreation of The Sims 
 
 ## Prerequisites
 
-   
-    -Windows
-    MonoGame: 3.6 or higher
-    OpenTK 1.2
-    
-    -Linux
-    OpenGL 3.0
-    SDL2
+- Windows
+  - Visual Studio 2017+ (or Build Tools) with .NET Framework 4.5
+  - Bundled dependencies in `SimsVille/Dependencies` (MonoGame.Framework, OpenTK, Tao.Sdl, GonzoNet, GOLDEngine, TargaImagePCL, DiscUtils)
+- Linux
+  - Mono with `msbuild`
+  - OpenGL 3.0 and SDL2 runtime libraries
 	
 ## Build
 
-Use Visual Studio 2017 or higher. Mono for Linux.  Run SimsVille.sln to build
+Open `SimsVille/SimsVille.sln` in Visual Studio 2017+ and build (Release/x86). On Linux, use Mono:
+
+```bash
+msbuild SimsVille/SimsVille.sln /p:Configuration=Release /p:Platform=x86
+```
 	
 ## Installation
 
-Original game needed, works with Complete Collection or Legacy Collection, install it in default path and run Simsville.
+- Install The Sims 1 (Complete Collection or Legacy Collection).
+  - Windows: the game installer sets the registry path that FreeSims uses to locate assets.
+  - Linux: copy the game files into `game/The Sims/` (relative to the repository root).
+- Build the solution (see above).
+- Run `SimsVille/bin/Release/SimsVille.exe` (or run from Visual Studio).
 
 ## AI Agents (optional sidecar)
 
